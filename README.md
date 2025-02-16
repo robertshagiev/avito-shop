@@ -19,33 +19,29 @@ cd avito-merch-store
 ### Запуск контейнеров
 Запускаем сервис и базу данных PostgreSQL:
 ```sh
-docker-compose up --build -d
+docker-compose -f docker/docker-compose.yml build --no-cache
+docker-compose -f docker/docker-compose.yml up -d
+
 ```
 
-### Накатывание миграций с Goose
-Для управления миграциями используется Goose
-
-### Установка goose
-``` sh
-go install github.com/pressly/goose/v3/cmd/goose@latest
-```
-Добавьте ```~/go/bin``` в PATH, если команда goose не работает
-```sh
-export PATH=$PATH:$(go env GOPATH)/bin
-```
-### Применение миграций
-```
-goose -dir ./migrations postgres "postgres://postgres:password@localhost:5432/shop?sslmode=disable" up
-```
-### Откат миграций (если нужно)
-```sh
-goose -dir ./migrations postgres "postgres://postgres:password@localhost:5432/shop?sslmode=disable" down
-```
-```
---build — пересобирает контейнер перед запуском.
--d — запускает контейнеры в фоновом режиме.
-```
 ### После запуска можно проверить состояние контейнеров:
 ```
 docker ps
 ```
+
+
+### Вопросы-Ответы
+1) Можно ли пользователю отменить покупку мерча?
+В задании не указано, поэтому не реализовано. Если нужно, можно добавить механизм возврата с проверкой времени покупки
+
+2) Можно ли вернуть переданные монеты?
+Не указано в ТЗ. В текущей реализации передача монет необратима
+
+3) Может ли пользователь передавать монеты самому себе?
+По умолчанию запрещено, так как не имеет смысла
+
+4) Есть ли логирование операций (покупки, передачи монет)?
+Да, все ошибки и бизнес-операции логируются через slog
+
+5) Нужна ли валидация username и password?
+Да, валидация логина и пароля нужна, и она реализована в сервисе

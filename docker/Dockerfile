@@ -1,11 +1,14 @@
-FROM golang:1.22
+FROM golang:1.22 AS builder
 
-WORKDIR ${GOPATH}/avito-shop/
-COPY . ${GOPATH}/avito-shop/
+WORKDIR /app
+COPY go.mod go.sum ./
+RUN go mod download
+COPY . .
 
-RUN go build -o /build ./internal/cmd \
-    && go clean -cache -modcache
+RUN CGO_ENABLED=0 GOOS=linux GOARCH=amd64 go build -o /app/merch-shop ./cmd
 
-EXPOSE 8080
+FROM alpine:latest
+WORKDIR /app
+COPY --from=builder /app/merch-shop /app/merch-shop
 
-CMD ["/build"]
+CMD ["/app/merch-shop"]

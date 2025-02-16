@@ -7,6 +7,7 @@ import (
 	"merch-shop/internal/api/apierror"
 	shopcontext "merch-shop/internal/api/context"
 	"net/http"
+	"strconv"
 	"strings"
 )
 
@@ -29,10 +30,21 @@ func (m *Middlewares) JWTToken(next http.Handler) http.Handler {
 		if claims, ok := token.Claims.(jwt.MapClaims); ok {
 			userID, ok := claims["sub"]
 			if ok && userID != nil {
-				ctx := shopcontext.WithUserID(r.Context(), uint64(userID.(float64)))
+				userIDStr, isString := userID.(string)
+				if !isString {
+					apierror.WriteError(w, apierror.ErrInvalidToken)
+					return
+				}
+
+				userIDUint, err := strconv.ParseUint(userIDStr, 10, 64)
+				if err != nil {
+					apierror.WriteError(w, apierror.ErrInvalidToken)
+					return
+				}
+
+				ctx := shopcontext.WithUserID(r.Context(), userIDUint)
 				r = r.WithContext(ctx)
 			}
-
 		} else {
 			apierror.WriteError(w, apierror.ErrInvalidToken)
 			return

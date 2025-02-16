@@ -13,6 +13,7 @@ var (
 	ErrParsingToken          = errors.New("failed to parse the JWT token")
 	ErrInvalidAuthHeader     = errors.New("the Authorization header is empty or does not contain Bearer token")
 	ErrAuthorizationRequired = errors.New("authorization required")
+	ErrInvalidRequest        = errors.New("invalid request")
 )
 
 type Err struct {
@@ -34,7 +35,7 @@ func FromError(err error) *Err {
 	switch {
 	default:
 		code = http.StatusInternalServerError
-		message = "что то пошло не так, повторите позже"
+		message = "internal server error"
 
 	case errors.Is(err, ErrParsingBody):
 		code = http.StatusBadRequest
@@ -61,6 +62,15 @@ func FromError(err error) *Err {
 		code = http.StatusBadRequest
 		message = err.Error()
 	case errors.Is(err, usecase.ErrSendCoin):
+		code = http.StatusBadRequest
+		message = err.Error()
+	case errors.Is(err, ErrInvalidRequest):
+		code = http.StatusBadRequest
+		message = err.Error()
+	case errors.Is(err, usecase.PasswordNotValid):
+		code = http.StatusBadRequest
+		message = err.Error()
+	case errors.Is(err, usecase.UsernameNotValid):
 		code = http.StatusBadRequest
 		message = err.Error()
 	}

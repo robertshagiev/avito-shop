@@ -5,7 +5,6 @@ import (
 	"database/sql"
 	"errors"
 	"fmt"
-	"log/slog"
 	"merch-shop/internal/domain"
 	"merch-shop/internal/usecase"
 )
@@ -28,27 +27,34 @@ func (r *Repository) CreateUser(ctx context.Context, creds domain.Credentials) (
 	return userID, nil
 }
 
-const getUserByUsername = `SELECT id, username, password,  FROM public.users WHERE username = $1`
+const getUserByUsername = `SELECT id, username, password  FROM public.users WHERE username = $1`
 
 func (r *Repository) GetUserByUsername(ctx context.Context, username string) (domain.User, error) {
-	var result domain.User
+	var (
+		result         domain.User
+		storedPassword string
+	)
 
-	if err := r.db.QueryRowContext(ctx, getUserByUsername, username).Scan(&result.ID, &result.Username, &result.Password); err != nil {
+	if err := r.db.QueryRowContext(ctx, getUserByUsername, username).Scan(&result.ID, &result.Credentials.Username, &storedPassword); err != nil {
 		if errors.Is(err, sql.ErrNoRows) {
 			return domain.User{}, usecase.ErrNotFound
 		}
 		return domain.User{}, err
 	}
 
+	result.Credentials.Password = domain.Password(storedPassword)
+
 	return result, nil
 }
 
-const getUserCoin = `SELECT coins, username  FROM public.users WHERE id = $1`
+const getUserByID = `SELECT coins, username FROM public.users WHERE id = $1`
 
-func (r *Repository) GetUserCoin(ctx context.Context, userID uint64) (domain.User, error) {
+func (r *Repository) GetUserByID(ctx context.Context, userID uint64) (domain.User, error) {
 	var result domain.User
 
-	if err := r.db.QueryRowContext(ctx, getUserCoin, userID).Scan(&result.Coins, result.Username); err != nil {
+	fmt.Println(userID)
+
+	if err := r.db.QueryRowContext(ctx, getUserByID, userID).Scan(&result.Coins, &result.Credentials.Username); err != nil {
 		if errors.Is(err, sql.ErrNoRows) {
 			return domain.User{}, usecase.ErrNotFound
 		}
@@ -132,42 +138,4 @@ func (r *Repository) GetUserTransactions(ctx context.Context, userID uint64) (do
 	}
 
 	return history, nil
-}
-
-const transferCoins = `
-	WITH updated_sender AS (
-		UPDATE users
-		SET coins = coins - $1
-		WHERE id = $2 AND coins >= $1
-		RETURNING id
-	),
-	updated_receiver AS (
-		UPDATE users
-		SET coins = coins + $1
-		WHERE id = $3
-		RETURNING id
-	)
-	INSERT INTO transactions (from_user_id, to_user_id, quantity)
-	SELECT $2, $3, $1
-	WHERE EXISTS (SELECT 1 FROM updated_sender) AND EXISTS (SELECT 1 FROM updated_receiver)
-	`
-
-func (r *Repository) TransferCoins(ctx context.Context, fromUserID, toUserID uint64, amount uint64) error {
-
-	res, err := r.db.ExecContext(ctx, transferCoins, amount, fromUserID, toUserID)
-	if err != nil {
-		return fmt.Errorf("ошибка выполнения перевода монет: %w", err)
-	}
-
-	rowsAffected, err := res.RowsAffected()
-	if err != nil {
-		return fmt.Errorf("ошибка получения количества затронутых строк: %w", err)
-	}
-
-	if rowsAffected == 0 {
-		slog.Error("recipient not found")
-		return usecase.ErrNotFound
-	}
-
-	return nil
 }

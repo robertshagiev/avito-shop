@@ -2,18 +2,21 @@ version: '3.8'
 
 services:
   avito-shop-service:
-    build: .
+    build:
+      context: ..
+      dockerfile: docker/Dockerfile
     container_name: avito-shop-service
     ports:
       - "8080:8080"
+    env_file:
+      - .env  # Загружаем переменные из .env
     environment:
-      # енвы подключения к БД
+      - DATABASE_URL=postgres://postgres:password@db:5432/shop?sslmode=disable
       - DATABASE_PORT=5432
       - DATABASE_USER=postgres
       - DATABASE_PASSWORD=password
       - DATABASE_NAME=shop
       - DATABASE_HOST=db
-      # порт сервиса
       - SERVER_PORT=8080
     depends_on:
       db:

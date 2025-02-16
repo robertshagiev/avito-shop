@@ -20,7 +20,7 @@ func NewRouter(
 		r.Post("/auth", handler.Auth)
 		r.With(mid.JWTToken).Get("/info", handler.Info)
 		r.With(mid.JWTToken).Post("/sendCoin", handler.SendCoin)
-
+		r.With(mid.JWTToken).Get("/buy/{item}", handler.BuyMerch)
 	})
 
 	return r, nil

@@ -28,6 +28,8 @@ CREATE TABLE IF NOT EXISTS public.inventory (
                             bought_on TIMESTAMP DEFAULT NOW()
 );
 
+ALTER TABLE public.inventory ADD CONSTRAINT inventory_unique_user_merch UNIQUE (user_id, merch_id);
+
 INSERT INTO public.merch (name, price) VALUES
                             ('t-shirt', 80),
                             ('cup', 20),

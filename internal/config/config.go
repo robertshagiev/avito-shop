@@ -15,7 +15,7 @@ import (
 
 type Config struct {
 	ServerPort  string `envconfig:"SERVER_PORT" default:"8080"`
-	DatabaseURL string `envonfig:"DATABASE_URL" required:"true"`
+	DatabaseURL string `envconfig:"DATABASE_URL" required:"true"`
 	PrivateKey  string `envconfig:"PRIVATE_KEY" required:"true"`
 	PublicKey   string `envconfig:"PUBLIC_KEY" required:"true"`
 }
@@ -24,7 +24,7 @@ func LoadConfig() (*Config, error) {
 	var cfg Config
 	err := envconfig.Process("", &cfg)
 	if err != nil {
-		slog.Error("Failed to load config", err)
+		slog.Error("Failed to load config", "error", err)
 		return nil, err
 	}
 	return &cfg, nil
